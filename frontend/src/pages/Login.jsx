@@ -25,11 +25,7 @@ export default function Login() {
 
         alert("Login Success");
 
-        if (res.data.user.role === "admin") {
-            navigate("/admin");
-        } else {
-            navigate("/student");
-        }
+        navigate("/");
     };
 
     return (

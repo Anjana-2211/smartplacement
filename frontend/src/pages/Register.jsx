@@ -8,6 +8,7 @@ export default function Register() {
         email: "",
         password: "",
         role: "student",
+        section: "A",
         rollNumber: "",
         branch: "CSE",
         cgpa: "",
@@ -17,10 +18,13 @@ export default function Register() {
     const navigate = useNavigate();
 
     const registerUser = async () => {
-        await API.post("/auth/register", form);
-
-        alert("Registered Successfully");
-        navigate("/login");
+        try {
+            await API.post("/auth/register", form);
+            alert("Registered Successfully");
+            navigate("/login");
+        } catch (err) {
+            alert(err.response?.data?.message || "Registration failed. Please try again.");
+        }
     };
     return (
 
@@ -94,6 +98,21 @@ export default function Register() {
                                 })
                             }
                         />
+
+                        <select
+                            className="form-input"
+                            value={form.section}
+                            onChange={(e) =>
+                                setForm({
+                                    ...form,
+                                    section: e.target.value
+                                })
+                            }
+                        >
+                            <option value="A">Section A</option>
+                            <option value="B">Section B</option>
+                            <option value="C">Section C</option>
+                        </select>
 
                         <select
                             className="form-input"

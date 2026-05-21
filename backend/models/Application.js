@@ -1,4 +1,6 @@
-import { Schema, model } from "mongoose";
+import mongoose from "mongoose";
+
+const { Schema, model, models } = mongoose;
 
 const applicationSchema = new Schema(
   {
@@ -50,4 +52,5 @@ const applicationSchema = new Schema(
 // Prevent duplicate applications for the same company
 applicationSchema.index({ student: 1, company: 1 }, { unique: true });
 
-export const Application=model("Application",applicationSchema);
+export const Application =
+  models.Application || model("Application", applicationSchema);

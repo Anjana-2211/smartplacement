@@ -5,8 +5,13 @@ const studentSchema = new Schema(
     rollNumber: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
+    },
+
+    section: {
+      type: String,
+      required: true,
+      enum: ["A", "B", "C"],
     },
 
     branch: {
@@ -39,6 +44,8 @@ const studentSchema = new Schema(
     timestamps: true,
   }
 );
+
+studentSchema.index({ section: 1, rollNumber: 1 }, { unique: true });
 
 export const Student =
   mongoose.models.Student || mongoose.model("Student", studentSchema);

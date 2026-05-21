@@ -26,8 +26,27 @@ app.use("/api/students", studentRoutes);
 
 mongoose
   .connect(process.env.DB_URL)
-  .then(() => {
+  .then(async () => {
     console.log("MongoDB Connected");
+
+    try {
+      const studentCollection = mongoose.connection.db.collection("students");
+      const indexes = await studentCollection.indexes();
+      const hasRollIndex = indexes.some((index) => index.name === "rollNumber_1");
+
+      if (hasRollIndex) {
+        await studentCollection.dropIndex("rollNumber_1");
+        console.log("Dropped old rollNumber unique index");
+      }
+
+      await studentCollection.createIndex(
+        { section: 1, rollNumber: 1 },
+        { unique: true }
+      );
+      console.log("Ensured unique student index on section + rollNumber");
+    } catch (indexErr) {
+      console.error("Failed to ensure student indexes", indexErr);
+    }
   })
   .catch((err) => {
     console.log(err);

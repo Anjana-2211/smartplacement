@@ -25,21 +25,10 @@ export default function Navbar() {
                 Companies
             </Link>
 
-            {user?.role === "student" && (
-                <Link to="/student">
-                    Student Dashboard
-                </Link>
-            )}
-
             {user?.role === "admin" && (
-                <>
-                    <Link to="/admin">
-                        Admin Dashboard
-                    </Link>
-                    <Link to="/admin/add-company">
-                        Add Company
-                    </Link>
-                </>
+                <Link to="/admin/add-company">
+                    Add Company
+                </Link>
             )}
 
             {

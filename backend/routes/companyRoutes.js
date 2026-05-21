@@ -2,6 +2,7 @@ import express from "express";
 
 import { Company } from "../models/Company.js";
 import { Student } from "../models/Student.js";
+import { Application } from "../models/Application.js";
 import { sendEmailToStudents } from "../utils/email.js";
 
 import { verifyToken } from "../middleware/verifyToken.js";
@@ -87,12 +88,18 @@ router.delete(
   verifyAdmin,
   async (req, res) => {
     try {
-      await Company.findByIdAndDelete(
+      const deletedCompany = await Company.findByIdAndDelete(
         req.params.id
       );
 
+      if (!deletedCompany) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+
+      await Application.deleteMany({ company: req.params.id });
+
       res.json({
-        message: "Company Deleted",
+        message: "Company deleted and related applications removed",
       });
     } catch (err) {
       res.status(500).json(err);

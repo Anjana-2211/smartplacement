@@ -47,7 +47,19 @@ export default function Companies() {
         }
     };
 
-    const apply = async (companyId) => {
+    const isDeadlineExpired = (deadline) => {
+        if (!deadline) return false;
+        const deadlineDate = new Date(deadline);
+        deadlineDate.setHours(23, 59, 59, 999);
+        return deadlineDate < new Date();
+    };
+
+    const apply = async (companyId, deadline) => {
+        if (isDeadlineExpired(deadline)) {
+            alert("Registration deadline has passed for this company.");
+            return;
+        }
+
         await API.post(
             `/applications/apply/${companyId}`
         );
@@ -97,24 +109,37 @@ export default function Companies() {
             <section>
                 <div className="section-title">Available Companies</div>
                 <div className="card-grid">
-                    {companies.map((company) => (
-                        <CompanyCard
-                            key={company._id}
-                            company={company}
-                            actionLabel={alreadyAppliedIds.includes(company._id) ? "Applied" : "Apply"}
-                            onAction={() => apply(company._id)}
-                            disabled={
-                                alreadyAppliedIds.includes(company._id) || !isEligible(company)
-                            }
-                            status={
-                                !student
-                                    ? undefined
-                                    : isEligible(company)
-                                        ? "Eligible"
-                                        : "Not eligible"
-                            }
-                        />
-                    ))}
+                    {companies.map((company) => {
+                        const expired = isDeadlineExpired(company.registrationDeadline);
+                        const eligible = isEligible(company);
+                        const alreadyApplied = alreadyAppliedIds.includes(company._id);
+                        const actionLabel = alreadyApplied
+                            ? "Applied"
+                            : expired
+                                ? "Expired"
+                                : "Apply";
+
+                        return (
+                            <CompanyCard
+                                key={company._id}
+                                company={company}
+                                actionLabel={actionLabel}
+                                onAction={() => apply(company._id, company.registrationDeadline)}
+                                disabled={
+                                    alreadyApplied || expired || !eligible
+                                }
+                                status={
+                                    !student
+                                        ? undefined
+                                        : expired
+                                            ? "Expired"
+                                            : eligible
+                                                ? "Eligible"
+                                                : "Not eligible"
+                                }
+                            />
+                        );
+                    })}
                 </div>
             </section>
         </main>

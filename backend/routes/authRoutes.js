@@ -14,6 +14,7 @@ router.post("/register", async (req, res) => {
       email,
       password,
       role,
+      section,
       rollNumber,
       branch,
       cgpa,
@@ -52,9 +53,26 @@ router.post("/register", async (req, res) => {
     });
 
     if (role === "student") {
-      if (!rollNumber || !branch) {
+      if (!rollNumber || !branch || !section) {
         return res.status(400).json({
-          message: "Roll number and branch are required for students",
+          message: "Section, roll number and branch are required for students",
+        });
+      }
+
+      if (!["A", "B", "C"].includes(section)) {
+        return res.status(400).json({
+          message: "Section must be A, B, or C",
+        });
+      }
+
+      const existingStudentWithRoll = await Student.findOne({
+        section,
+        rollNumber,
+      });
+
+      if (existingStudentWithRoll) {
+        return res.status(400).json({
+          message: "Roll number already registered for this section",
         });
       }
 
@@ -77,13 +95,24 @@ router.post("/register", async (req, res) => {
         });
       }
 
-      await Student.create({
-        rollNumber,
-        branch,
-        cgpa: parsedCgpa,
-        backlogs: parsedBacklogs,
-        user: user._id,
-      });
+      try {
+        await Student.create({
+          section,
+          rollNumber,
+          branch,
+          cgpa: parsedCgpa,
+          backlogs: parsedBacklogs,
+          user: user._id,
+        });
+      } catch (studentErr) {
+        await User.findByIdAndDelete(user._id);
+        if (studentErr.code === 11000) {
+          return res.status(400).json({
+            message: "Roll number already registered for this section",
+          });
+        }
+        throw studentErr;
+      }
     }
 
     res.status(201).json({
@@ -94,6 +123,16 @@ router.post("/register", async (req, res) => {
     if (err.name === "ValidationError") {
       return res.status(400).json({ message: err.message });
     }
+
+    if (err.code === 11000) {
+      return res.status(400).json({
+        message:
+          err.keyPattern?.section && err.keyPattern?.rollNumber
+            ? "Roll number already registered for this section"
+            : "Duplicate registration data",
+      });
+    }
+
     res.status(500).json(err);
   }
 });

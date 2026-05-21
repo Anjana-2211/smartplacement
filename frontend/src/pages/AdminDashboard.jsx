@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 import API from "../api";
 
 const statusOptions = [
@@ -12,6 +12,7 @@ const statusOptions = [
 ];
 
 export default function AdminDashboard() {
+    const navigate = useNavigate();
     const [companies, setCompanies] = useState([]);
     const [students, setStudents] = useState([]);
     const [applications, setApplications] = useState([]);
@@ -104,6 +105,10 @@ export default function AdminDashboard() {
     const updateStatus = async (applicationId, status) => {
         await API.put(`/applications/status/${applicationId}`, { status });
         getApplications();
+    };
+
+    const companyAppCount = (companyId) => {
+        return applications.filter((app) => app.company?._id === companyId).length;
     };
 
     return (
@@ -224,33 +229,23 @@ export default function AdminDashboard() {
 
             <section className="form-section">
                 <h2>Manage Applications</h2>
+                <p>Click on a company to view detailed application report.</p>
             </section>
 
-            <div className="app-table">
-                <div className="app-row app-row--head">
-                    <div>Student</div>
-                    <div>Company</div>
-                    <div>Status</div>
-                    <div>Update</div>
+            <section className="form-section">
+                <div className="section-title">Company Reports</div>
+                <div className="card-grid">
+                    {companies.map((company) => (
+                        <button
+                            key={company._id}
+                            className="btn"
+                            onClick={() => navigate(`/admin/report/${company._id}`)}
+                        >
+                            {company.companyName} ({companyAppCount(company._id)})
+                        </button>
+                    ))}
                 </div>
-                {applications.map((app) => (
-                    <div key={app._id} className="app-row">
-                        <div>{app.student?.user?.name || app.student?.name || "-"}</div>
-                        <div>{app.company?.companyName || "-"}</div>
-                        <div>{app.status}</div>
-                        <div>
-                            <select
-                                value={app.status}
-                                onChange={(e) => updateStatus(app._id, e.target.value)}
-                            >
-                                {statusOptions.map((option) => (
-                                    <option key={option} value={option}>{option}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                ))}
-            </div>
+            </section>
         </main>
     );
 }
