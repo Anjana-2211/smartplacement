@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import API from "../api";
 
 export default function Profile() {
@@ -45,27 +46,27 @@ export default function Profile() {
         e.preventDefault();
         try {
             await API.put(`/auth/update-profile/${loggedInUser._id}`, profileForm);
-            alert("Profile updated successfully!");
+            toast.success("Profile updated successfully!");
             fetchProfile();
         } catch (err) {
-            alert(err.response?.data?.message || "Update failed");
+            toast.error(err.response?.data?.message || "Update failed");
         }
     };
 
     const handlePasswordChange = async (e) => {
         e.preventDefault();
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-            return alert("New passwords do not match");
+            return toast.error("New passwords do not match");
         }
         try {
             await API.put(`/auth/change-password/${loggedInUser._id}`, {
                 currentPassword: passwordForm.currentPassword,
                 newPassword: passwordForm.newPassword
             });
-            alert("Password changed successfully!");
+            toast.success("Password changed successfully!");
             setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
         } catch (err) {
-            alert(err.response?.data?.message || "Password change failed");
+            toast.error(err.response?.data?.message || "Password change failed");
         }
     };
 

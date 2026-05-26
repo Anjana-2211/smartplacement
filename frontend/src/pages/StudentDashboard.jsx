@@ -45,7 +45,7 @@ export default function StudentDashboard() {
                                 style={{ marginTop: "1rem", width: "auto", padding: "8px 16px" }}
                                 onClick={() => navigate("/profile")}
                             >
-                                Edit Profile / Change Password
+                                Edit Profile
                             </button>
                         </>
                     ) : (

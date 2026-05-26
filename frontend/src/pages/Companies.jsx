@@ -3,6 +3,7 @@ import {
     useState
 } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import API from "../api";
 
@@ -64,7 +65,7 @@ export default function Companies() {
 
     const apply = async (companyId, deadline) => {
         if (isDeadlineExpired(deadline)) {
-            alert("Registration deadline has passed for this company.");
+            toast.error("Registration deadline has passed for this company.");
             return;
         }
 
@@ -72,7 +73,7 @@ export default function Companies() {
             `/applications/apply/${companyId}`
         );
 
-        alert("Applied Successfully");
+        toast.success("Applied Successfully!");
         getApplications();
     };
 

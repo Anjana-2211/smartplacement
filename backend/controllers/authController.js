@@ -72,8 +72,7 @@ export const login = async (
 
     if (!user) {
       return res.status(404).json({
-        message:
-          "User not found",
+        message: "User does not exist",
       });
     }
 
@@ -85,8 +84,7 @@ export const login = async (
 
     if (!isMatch) {
       return res.status(400).json({
-        message:
-          "Wrong password",
+        message: "Password is invalid",
       });
     }
 

@@ -1,5 +1,6 @@
 import { useContext, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
 import API from "../api";
 
 import { AuthContext } from "../context/AuthContext";
@@ -18,15 +19,19 @@ export default function Login() {
     const from = location.state?.from?.pathname || "/";
 
     const loginUser = async () => {
+        try {
+            const res = await API.post(
+                "/auth/login",
+                form
+            );
 
-        const res = await API.post(
-            "/auth/login",
-            form
-        );
+            login(res.data.user, res.data.token);
+            toast.success(`Welcome back, ${res.data.user.name}!`);
 
-        login(res.data.user, res.data.token);
-
-        navigate(from, { replace: true });
+            navigate(from, { replace: true });
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Login failed. Please try again.");
+        }
     };
 
     return (
