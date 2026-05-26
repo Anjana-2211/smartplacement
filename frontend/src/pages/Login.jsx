@@ -1,5 +1,5 @@
-﻿import { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import API from "../api";
 
 import { AuthContext } from "../context/AuthContext";
@@ -13,6 +13,9 @@ export default function Login() {
 
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const from = location.state?.from?.pathname || "/";
 
     const loginUser = async () => {
 
@@ -23,9 +26,7 @@ export default function Login() {
 
         login(res.data.user, res.data.token);
 
-        alert("Login Success");
-
-        navigate("/");
+        navigate(from, { replace: true });
     };
 
     return (

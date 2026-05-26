@@ -1,4 +1,4 @@
-﻿import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useContext } from "react";
 
 import { AuthContext } from "../context/AuthContext";
@@ -31,6 +31,12 @@ export default function Navbar() {
                 </Link>
             )}
 
+            {user && (
+                <button className="logout-btn" onClick={handleLogout}>
+                    Logout
+                </button>
+            )}
+
             {
                 !user ? (
                     <>
@@ -42,11 +48,7 @@ export default function Navbar() {
                             Register
                         </Link>
                     </>
-                ) : (
-                    <button className="btn" onClick={handleLogout}>
-                        Logout
-                    </button>
-                )
+                ) : null
             }
 
         </nav>

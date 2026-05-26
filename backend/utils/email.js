@@ -1,9 +1,14 @@
 import nodemailer from "nodemailer";
 
+console.log("EMAIL_HOST:", process.env.EMAIL_HOST);
+console.log("EMAIL_PORT:", process.env.EMAIL_PORT);
+console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
+
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT) || 587,
-  secure: process.env.EMAIL_SECURE === "true",
+  port: Number(process.env.EMAIL_PORT),
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -11,11 +16,6 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendEmail = async ({ to, subject, text, html }) => {
-  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.log("Email configuration missing: skipping email delivery.");
-    return null;
-  }
-
   return transporter.sendMail({
     from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
     to,
@@ -25,27 +25,48 @@ export const sendEmail = async ({ to, subject, text, html }) => {
   });
 };
 
-export const sendEmailToStudents = async (students, subject, text, html) => {
+export const sendEmailToStudents = async (
+  students,
+  subject,
+  text,
+  html
+) => {
   if (!Array.isArray(students) || students.length === 0) {
-    return null;
+    console.log("No eligible students found");
+    return;
   }
 
-  const deliveries = students.map((student) => {
+  console.log("Students count:", students.length);
+
+  for (const student of students) {
     if (!student.user?.email) {
-      return Promise.resolve(null);
+      console.log("Email missing");
+      continue;
     }
 
-    const personalizedText = `Hello ${student.user.name},\n\n${text}`;
-    return sendEmail({
-      to: student.user.email,
-      subject,
-      text: personalizedText,
-      html,
-    }).catch((err) => {
-      console.error("Email delivery failed for", student.user.email, err);
-      return null;
-    });
-  });
+    try {
+      console.log("Sending to:", student.user.email);
 
-  return Promise.allSettled(deliveries);
+      const personalizedText =
+        `Hello ${student.user.name},\n\n${text}`;
+
+      const info = await sendEmail({
+        to: student.user.email,
+        subject,
+        text: personalizedText,
+        html,
+      });
+
+      console.log("Mail sent successfully");
+      console.log(info);
+
+    } catch (err) {
+      console.log(
+        "Email delivery failed for",
+        student.user.email
+      );
+
+      console.log(err);
+    }
+  }
 };

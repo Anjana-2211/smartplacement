@@ -1,7 +1,8 @@
-﻿import {
+import {
     useEffect,
     useState
 } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 
 import API from "../api";
 
@@ -9,9 +10,16 @@ import CompanyCard from "../components/CompanyCard";
 
 export default function Companies() {
 
+    const { id } = useParams();
+    const navigate = useNavigate();
+
     const [companies, setCompanies] = useState([]);
     const [student, setStudent] = useState(null);
     const [applications, setApplications] = useState([]);
+    const [activeTab, setActiveTab] = useState("available"); // "available" or "applied"
+    const [showFilters, setShowFilters] = useState(false);
+    const [searchQuery, setSearchTerm] = useState("");
+    const [roleFilter, setRoleFilter] = useState("");
 
     useEffect(() => {
 
@@ -70,6 +78,22 @@ export default function Companies() {
 
     const alreadyAppliedIds = applications.map((app) => app.company?._id);
 
+    const applicationStatusMap = applications.reduce((map, app) => {
+        if (app.company?._id) map[app.company._id] = app.status;
+        return map;
+    }, {});
+
+    const filteredCompanies = companies.filter((c) => {
+        const matchesSearch = c.companyName.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesRole = c.jobRole.toLowerCase().includes(roleFilter.toLowerCase());
+        const isIdMatch = id ? c._id === id : true;
+        
+        if (!matchesSearch || !matchesRole || !isIdMatch) return false;
+
+        if (activeTab === "applied") return alreadyAppliedIds.includes(c._id);
+        return !alreadyAppliedIds.includes(c._id);
+    });
+
     const isEligible = (company) => {
         if (!student) return false;
         return (
@@ -84,36 +108,65 @@ export default function Companies() {
         <main className="page-shell">
             <section className="form-section">
                 <h1>Company Listings</h1>
-                <p>Browse active placement drives and check your eligibility in real time.</p>
+                <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+                    <button 
+                        className={`btn ${activeTab === "available" ? "" : "btn-secondary"}`} 
+                        style={{ flex: 1 }}
+                        onClick={() => setActiveTab("available")}
+                    >
+                        Available Drives
+                    </button>
+                    <button 
+                        className={`btn ${activeTab === "applied" ? "" : "btn-secondary"}`} 
+                        style={{ flex: 1 }}
+                        onClick={() => setActiveTab("applied")}
+                    >
+                        My Applications
+                    </button>
+                </div>
             </section>
 
-            <section className="dashboard-grid">
-                <div className="profile-card">
-                    <h2>Student Info</h2>
-                    {student ? (
-                        <>
-                            <p><strong>Branch:</strong> {student.branch}</p>
-                            <p><strong>CGPA:</strong> {student.cgpa}</p>
-                            <p><strong>Backlogs:</strong> {student.backlogs}</p>
-                        </>
-                    ) : (
-                        <p>Log in as a student to see eligibility details.</p>
-                    )}
-                </div>
-                <div className="profile-card">
-                    <h2>Applications</h2>
-                    <p>{applications.length} total applications</p>
-                </div>
+            <section className="form-section">
+                <button className="btn-secondary" onClick={() => setShowFilters(!showFilters)}>
+                    {showFilters ? "Hide Filters" : "Show Filters"}
+                </button>
+                {showFilters && (
+                    <div className="form-grid" style={{ marginTop: "1rem", background: "#f9f9f9", padding: "1rem", borderRadius: "8px" }}>
+                        <input 
+                            className="form-input" 
+                            placeholder="Search by Company Name..." 
+                            value={searchQuery}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        <input 
+                            className="form-input" 
+                            placeholder="Filter by Role (e.g. Developer)..." 
+                            value={roleFilter}
+                            onChange={(e) => setRoleFilter(e.target.value)}
+                        />
+                    </div>
+                )}
             </section>
 
             <section>
-                <div className="section-title">Available Companies</div>
+                <div className="section-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>{id ? "Selected Company Detail" : "Available Companies"}</span>
+                    {id && (
+                        <button
+                            className="btn"
+                            style={{ width: "auto", minHeight: "unset", padding: "8px 16px", fontSize: "0.85rem", margin: 0 }}
+                            onClick={() => navigate("/companies")}
+                        >
+                            Show All Companies
+                        </button>
+                    )}
+                </div>
                 <div className="card-grid">
-                    {companies.map((company) => {
+                    {filteredCompanies.map((company) => {
                         const expired = isDeadlineExpired(company.registrationDeadline);
                         const eligible = isEligible(company);
-                        const alreadyApplied = alreadyAppliedIds.includes(company._id);
-                        const actionLabel = alreadyApplied
+                        const status = applicationStatusMap[company._id];
+                        const actionLabel = status
                             ? "Applied"
                             : expired
                                 ? "Expired"
@@ -125,22 +178,15 @@ export default function Companies() {
                                 company={company}
                                 actionLabel={actionLabel}
                                 onAction={() => apply(company._id, company.registrationDeadline)}
-                                disabled={
-                                    alreadyApplied || expired || !eligible
-                                }
-                                status={
-                                    !student
-                                        ? undefined
-                                        : expired
-                                            ? "Expired"
-                                            : eligible
-                                                ? "Eligible"
-                                                : "Not eligible"
-                                }
+                                disabled={!!status || expired || !eligible}
+                                status={status || (expired ? "Expired" : eligible ? "Eligible" : "Not eligible")}
                             />
                         );
                     })}
                 </div>
+                {filteredCompanies.length === 0 && (
+                    <p style={{ textAlign: "center", marginTop: "2rem" }}>No companies found matching your criteria.</p>
+                )}
             </section>
         </main>
     );

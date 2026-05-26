@@ -1,14 +1,13 @@
+import "dotenv/config";
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import dotenv from "dotenv";
 
 import authRoutes from "./routes/authRoutes.js";
 import companyRoutes from "./routes/companyRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
-
-dotenv.config();
+console.log("EMAIL_HOST:", process.env.EMAIL_HOST);
 
 const app = express();
 

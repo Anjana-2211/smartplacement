@@ -1,15 +1,16 @@
-﻿import { useEffect, useState } from "react";
+﻿﻿import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../api";
 import CompanyCard from "../components/CompanyCard";
 
 export default function StudentDashboard() {
     const [profile, setProfile] = useState(null);
+    const navigate = useNavigate();
     const [eligibleCompanies, setEligibleCompanies] = useState([]);
     const [applications, setApplications] = useState([]);
 
     useEffect(() => {
         getProfile();
-        getEligibleCompanies();
         getApplications();
     }, []);
 
@@ -18,63 +19,16 @@ export default function StudentDashboard() {
         setProfile(res.data);
     };
 
-    const getEligibleCompanies = async () => {
-        const res = await API.get("/students/eligible");
-        setEligibleCompanies(res.data.companies || []);
-    };
-
     const getApplications = async () => {
         const res = await API.get("/applications/my-applications");
         setApplications(res.data);
     };
 
-    const isDeadlineExpired = (deadline) => {
-        if (!deadline) return false;
-        const deadlineDate = new Date(deadline);
-        deadlineDate.setHours(23, 59, 59, 999);
-        return deadlineDate < new Date();
-    };
-
-    const apply = async (companyId, deadline) => {
-        if (isDeadlineExpired(deadline)) {
-            alert("Registration deadline has passed for this company.");
-            return;
-        }
-
-        await API.post(`/applications/apply/${companyId}`);
-        alert("Applied Successfully");
-        getApplications();
-        getEligibleCompanies();
-    };
-
-    const applicationMap = applications.reduce((map, application) => {
-        if (application.company?._id) {
-            map[application.company._id] = application.status;
-        }
-        return map;
-    }, {});
-
-    const appliedCompanies = eligibleCompanies.filter((company) =>
-        applicationMap[company._id]
-    );
-
-    const notAppliedCompanies = eligibleCompanies.filter(
-        (company) => !applicationMap[company._id]
-    );
-
-    const openCompanies = notAppliedCompanies.filter(
-        (company) => !isDeadlineExpired(company.registrationDeadline)
-    );
-
-    const expiredCompanies = notAppliedCompanies.filter(
-        (company) => isDeadlineExpired(company.registrationDeadline)
-    );
-
     return (
         <main className="page-shell">
             <section className="form-section">
                 <h1>Student Dashboard</h1>
-                <p>View eligible opportunities, apply for drives, and track your status.</p>
+                <p>Manage your profile and track your application status.</p>
             </section>
 
             <section className="dashboard-grid">
@@ -86,6 +40,13 @@ export default function StudentDashboard() {
                             <p><strong>Branch:</strong> {profile.branch}</p>
                             <p><strong>CGPA:</strong> {profile.cgpa}</p>
                             <p><strong>Backlogs:</strong> {profile.backlogs}</p>
+                            <button 
+                                className="btn" 
+                                style={{ marginTop: "1rem", width: "auto", padding: "8px 16px" }}
+                                onClick={() => navigate("/profile")}
+                            >
+                                Edit Profile / Change Password
+                            </button>
                         </>
                     ) : (
                         <p>Loading profile...</p>
@@ -101,63 +62,6 @@ export default function StudentDashboard() {
                         </div>
                     ))}
                 </div>
-            </section>
-
-            <section>
-                <div className="section-title">Available to Apply</div>
-                {openCompanies.length > 0 ? (
-                    <div className="card-grid">
-                        {openCompanies.map((company) => (
-                            <CompanyCard
-                                key={company._id}
-                                company={company}
-                                actionLabel="Apply"
-                                onAction={() => apply(company._id, company.registrationDeadline)}
-                                disabled={false}
-                                status="Eligible"
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <p>No more eligible companies to apply.</p>
-                )}
-                {expiredCompanies.length > 0 && (
-                    <div>
-                        <div className="section-title">Expired Drives</div>
-                        <div className="card-grid">
-                            {expiredCompanies.map((company) => (
-                                <CompanyCard
-                                    key={company._id}
-                                    company={company}
-                                    actionLabel="Expired"
-                                    onAction={() => {}}
-                                    disabled={true}
-                                    status="Expired"
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </section>
-
-            <section>
-                <div className="section-title">Applied Companies</div>
-                {appliedCompanies.length > 0 ? (
-                    <div className="card-grid">
-                        {appliedCompanies.map((company) => (
-                            <CompanyCard
-                                key={company._id}
-                                company={company}
-                                actionLabel={applicationMap[company._id]}
-                                onAction={() => {}}
-                                disabled={true}
-                                status={applicationMap[company._id]}
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <p>You haven't applied to any companies yet.</p>
-                )}
             </section>
         </main>
     );

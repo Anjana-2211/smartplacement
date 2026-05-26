@@ -14,6 +14,7 @@ import Register from "./pages/Register";
 import Companies from "./pages/Companies";
 import Dashboard from "./pages/Dashboard";
 import AddCompany from "./pages/admin/AddCompany";
+import Profile from "./pages/Profile";
 import CompanyApplicationReport from "./pages/admin/CompanyApplicationReport";
 
 export default function App() {
@@ -46,7 +47,25 @@ export default function App() {
                 />
 
                 <Route
+                    path="/profile"
+                    element={
+                        <ProtectedRoute>
+                            <Profile />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
                     path="/companies"
+                    element={
+                        <ProtectedRoute>
+                            <Companies />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/companies/:id"
                     element={
                         <ProtectedRoute>
                             <Companies />

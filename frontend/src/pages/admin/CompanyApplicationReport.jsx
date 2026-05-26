@@ -56,6 +56,49 @@ export default function CompanyApplicationReport() {
         }
     };
 
+    const downloadCSV = () => {
+        const headers = [
+            "Section",
+            "Student Name",
+            "Email",
+            "Roll Number",
+            "Branch",
+            "CGPA",
+            "Backlogs",
+            "Status"
+        ];
+
+        const rows = filteredApplications.map(app => [
+            app.student?.section || "-",
+            app.student?.user?.name || app.student?.name || "-",
+            app.student?.user?.email || "-",
+            app.student?.rollNumber || "-",
+            app.student?.branch || "-",
+            app.student?.cgpa ?? "-",
+            app.student?.backlogs ?? "-",
+            app.status || "-"
+        ]);
+
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+
+        const companyNameClean = (company?.companyName || "company").replace(/[^a-z0-9]/gi, "_").toLowerCase();
+        const filename = `${companyNameClean}_applications_${selectedStatus.toLowerCase().replace(/\s+/g, "_")}_section_${selectedSection.toLowerCase()}_branch_${selectedBranch.toLowerCase()}.csv`;
+
+        link.setAttribute("download", filename);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const filteredApplications = applications
         .filter((app) => selectedStatus === "All" || app.status === selectedStatus)
         .filter((app) => selectedSection === "All" || app.student?.section === selectedSection)
@@ -89,9 +132,6 @@ export default function CompanyApplicationReport() {
     return (
         <main className="page-shell">
             <section className="form-section">
-                <button className="btn" onClick={() => navigate("/")} style={{ marginBottom: "1rem" }}>
-                    ← Back to Dashboard
-                </button>
                 <h1>{company?.companyName || "Company Report"}</h1>
                 <p><strong>Role:</strong> {company?.jobRole} | <strong>Package:</strong> {company?.ctc}</p>
                 <p><strong>Min CGPA:</strong> {company?.minCGPA} | <strong>Max Backlogs:</strong> {company?.maxBacklogs} | <strong>Eligible Branches:</strong> {company?.eligibleBranches?.join(", ")}</p>
@@ -172,7 +212,16 @@ export default function CompanyApplicationReport() {
                 </section>
             ) : (
                 <section className="form-section">
-                    <h3>All Student Applications ({filteredApplications.length})</h3>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+                        <h3 style={{ margin: 0 }}>All Student Applications ({filteredApplications.length})</h3>
+                        <button
+                            className="btn"
+                            style={{ width: "auto", minHeight: "unset", padding: "8px 16px", fontSize: "0.85rem", margin: 0 }}
+                            onClick={downloadCSV}
+                        >
+                            Download Report (CSV)
+                        </button>
+                    </div>
                     <div className="app-table">
                         <div className="app-row app-row--head">
                             <div><strong>Section</strong></div>

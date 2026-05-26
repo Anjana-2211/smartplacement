@@ -182,4 +182,77 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.get("/profile/:userId", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    let student = null;
+    if (user.role === "student") {
+      student = await Student.findOne({ user: user._id });
+    }
+
+    res.json({ user, student });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+router.put("/update-profile/:userId", async (req, res) => {
+  try {
+    const { name, cgpa, backlogs } = req.body;
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (name) {
+      user.name = name;
+      await user.save();
+    }
+
+    if (user.role === "student") {
+      const student = await Student.findOne({ user: user._id });
+      if (student) {
+        if (cgpa !== undefined) {
+          const parsedCgpa = parseFloat(cgpa);
+          if (!Number.isNaN(parsedCgpa) && parsedCgpa >= 0 && parsedCgpa <= 10) {
+            student.cgpa = parsedCgpa;
+          }
+        }
+        if (backlogs !== undefined) {
+          const parsedBacklogs = Number(backlogs);
+          if (!Number.isNaN(parsedBacklogs) && parsedBacklogs >= 0) {
+            student.backlogs = parsedBacklogs;
+          }
+        }
+        await student.save();
+      }
+    }
+
+    res.json({ message: "Profile updated successfully" });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+router.put("/change-password/:userId", async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Incorrect current password" });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
 export default router;

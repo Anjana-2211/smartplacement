@@ -137,21 +137,21 @@ export default function AdminDashboard() {
                 <h2>Company Listings</h2>
             </section>
 
-            <div className="app-table">
-                <div className="app-row app-row--head">
+            <div className="company-table">
+                <div className="company-row company-row--head">
                     <div>Company</div>
                     <div>Role</div>
                     <div>CGPA / Backlogs</div>
                     <div>Actions</div>
                 </div>
                 {companies.map((company) => (
-                    <div key={company._id} className="app-row">
+                    <div key={company._id} className="company-row">
                         <div>{company.companyName}</div>
                         <div>{company.jobRole}</div>
                         <div>
                             {company.minCGPA} CGPA / {company.maxBacklogs} backlogs
                         </div>
-                        <div>
+                        <div style={{ display: "flex", gap: "8px" }}>
                             <button className="btn" onClick={() => startEdit(company)}>
                                 Edit
                             </button>
